@@ -333,7 +333,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
             ImportOrchestratorJobInputData importOrchestratorInputData = new ImportOrchestratorJobInputData();
             ImportOrchestratorJobResult importOrchestratorJobResult = new ImportOrchestratorJobResult();
             TestQueueClient testQueueClient = new TestQueueClient();
-            int getJobByGroupIdCalledTime = 0;
+            bool getJobByGroupIdCalledTime = false;
 
             testQueueClient.GetJobByIdFunc = (queueClient, id, _) =>
             {
@@ -349,7 +349,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
             testQueueClient.GetJobByGroupIdFunc = (queueClient, groupId, _) =>
             {
                 IEnumerable<JobInfo> jobInfos = queueClient.JobInfos.Where(t => t.GroupId == groupId);
-                if (++getJobByGroupIdCalledTime > 1)
+                if (!getJobByGroupIdCalledTime)
                 {
                     foreach (JobInfo jobInfo in jobInfos)
                     {
@@ -360,6 +360,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
                     }
                 }
 
+                getJobByGroupIdCalledTime = true;
                 return jobInfos;
             };
             importOrchestratorInputData.CreateTime = Clock.UtcNow;
@@ -462,7 +463,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
             IMediator mediator = Substitute.For<IMediator>();
             ImportOrchestratorJobInputData importOrchestratorInputData = new ImportOrchestratorJobInputData();
             TestQueueClient testQueueClient = new TestQueueClient();
-            int getJobByGroupIdCalledTime = 0;
+            bool getJobByGroupIdCalledTime = false;
             testQueueClient.GetJobByIdFunc = (queueClient, id, _) =>
             {
                 if (id > 10)
@@ -487,7 +488,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
             testQueueClient.GetJobByGroupIdFunc = (queueClient, groupId, _) =>
             {
                 IEnumerable<JobInfo> jobInfos = queueClient.JobInfos.Where(t => t.GroupId == groupId);
-                if (++getJobByGroupIdCalledTime > 2)
+                if (!getJobByGroupIdCalledTime)
                 {
                     foreach (JobInfo jobInfo in jobInfos)
                     {
@@ -498,6 +499,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
                     }
                 }
 
+                getJobByGroupIdCalledTime = true;
                 return jobInfos;
             };
 
