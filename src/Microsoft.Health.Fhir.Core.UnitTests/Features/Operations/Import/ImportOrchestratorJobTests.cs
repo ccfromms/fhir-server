@@ -681,7 +681,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
         }
 
         [Fact]
-        public async Task GiveAnOrchestratorJob_SubJobCancelledAfterThreeCalls_ThenOperationCanceledExceptionShouldBeThrowAndContextUpdate()
+        public async Task GivenAnOrchestratorJob_SubJobCancelledAfterThreeCalls_ThenOperationCanceledExceptionShouldBeThrowAndContextUpdate()
         {
             IImportOrchestratorJobDataStoreOperation fhirDataBulkImportOperation = Substitute.For<IImportOrchestratorJobDataStoreOperation>();
             RequestContextAccessor<IFhirRequestContext> contextAccessor = Substitute.For<RequestContextAccessor<IFhirRequestContext>>();
