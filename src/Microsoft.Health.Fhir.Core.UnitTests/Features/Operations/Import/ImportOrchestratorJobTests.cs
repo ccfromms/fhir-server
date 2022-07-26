@@ -65,15 +65,15 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
         }
 
         [Fact]
-        public async Task GivenAnOrchestratorJob_SetSomeJobCancelled()
+        public async Task GivenAnOrchestratorJob_WhenSomeJobsCancelled_ThenOperationCanceledExceptionShouldBeThrowAndWaitForOtherSubJobsCompleted()
         {
-            await VerifyJobStatusChangedAsync(100, 1, JobStatus.Cancelled, 21, 20, 20);
+            await VerifyJobStatusChangedAsync(100, 1, JobStatus.Cancelled, 20, 20);
         }
 
         [Fact]
-        public async Task GivenAnOrchestratorJob_SetSomeJobFailed()
+        public async Task GivenAnOrchestratorJob_WhenSomeJobsFailed_ThenImportProcessingExceptionShouldBeThrowAndWaitForOtherSubJobsCompleted()
         {
-            await VerifyJobStatusChangedAsync(100, 1, JobStatus.Failed, 15, 14, 14);
+            await VerifyJobStatusChangedAsync(100, 1, JobStatus.Failed, 14, 14);
         }
 
         [Fact]
@@ -322,7 +322,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
         }
 
         [Fact]
-        public async Task GivenAnOrchestratorJob_WhenLastSubJobFailed_ThenImportProcessingExceptionShouldBeThrowAndWaitForOtherSubJobsCompleted()
+        public async Task GivenAnOrchestratorJob_WhenLastSubJobFailed_ThenImportProcessingExceptionShouldBeThrowAndWaitForOtherSubJobsCancelledAndCompleted()
         {
             IImportOrchestratorJobDataStoreOperation fhirDataBulkImportOperation = Substitute.For<IImportOrchestratorJobDataStoreOperation>();
             RequestContextAccessor<IFhirRequestContext> contextAccessor = Substitute.For<RequestContextAccessor<IFhirRequestContext>>();
@@ -365,13 +365,15 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
             importOrchestratorInputData.CreateTime = Clock.UtcNow;
             importOrchestratorInputData.BaseUri = new Uri("http://dummy");
             var inputs = new List<InputResource>();
+
+            // completed 2, running 1, created 2.
             for (int i = 0; i < 3; i++)
             {
                 string location = $"http://dummy/{i}";
                 inputs.Add(new InputResource() { Type = "Resource", Url = new Uri(location) });
                 ImportProcessingJobInputData processingInput = new ImportProcessingJobInputData()
                 {
-                    ResourceLocation = "http:test",
+                    ResourceLocation = "http://test",
                     BeginSequenceId = i,
                     EndSequenceId = i + 1,
                 };
@@ -498,7 +500,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
                 inputs.Add(new InputResource() { Type = "Resource", Url = new Uri(location) });
                 ImportProcessingJobInputData processingInput = new ImportProcessingJobInputData()
                 {
-                    ResourceLocation = "http:test",
+                    ResourceLocation = "http://test",
                     BeginSequenceId = i,
                     EndSequenceId = i + 1,
                 };
@@ -578,7 +580,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
         }
 
         [Fact]
-        public async Task GivenAnOrchestratorJob_SubJobFailedWhenOthersRunning_ThenImportProcessingExceptionShouldBeThrowAndContextUpdated()
+        public async Task GivenAnOrchestratorJob_WhenSubJobFailedAndOthersRunning_ThenImportProcessingExceptionShouldBeThrowAndContextUpdated()
         {
             IImportOrchestratorJobDataStoreOperation fhirDataBulkImportOperation = Substitute.For<IImportOrchestratorJobDataStoreOperation>();
             RequestContextAccessor<IFhirRequestContext> contextAccessor = Substitute.For<RequestContextAccessor<IFhirRequestContext>>();
@@ -681,7 +683,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
         }
 
         [Fact]
-        public async Task GivenAnOrchestratorJob_SubJobCancelledAfterThreeCalls_ThenOperationCanceledExceptionShouldBeThrowAndContextUpdate()
+        public async Task GivenAnOrchestratorJob_WhneSubJobCancelledAfterThreeCalls_ThenOperationCanceledExceptionShouldBeThrowAndContextUpdate()
         {
             IImportOrchestratorJobDataStoreOperation fhirDataBulkImportOperation = Substitute.For<IImportOrchestratorJobDataStoreOperation>();
             RequestContextAccessor<IFhirRequestContext> contextAccessor = Substitute.For<RequestContextAccessor<IFhirRequestContext>>();
@@ -754,7 +756,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
         }
 
         [Fact]
-        public async Task GivenAnOrchestratorJob_SubJobFailedAfterThreeCalls_ThenImportProcessingExceptionShouldBeThrowAndContextUpdated()
+        public async Task GivenAnOrchestratorJob_WhenSubJobFailedAfterThreeCalls_ThenImportProcessingExceptionShouldBeThrowAndContextUpdated()
         {
             IImportOrchestratorJobDataStoreOperation fhirDataBulkImportOperation = Substitute.For<IImportOrchestratorJobDataStoreOperation>();
             RequestContextAccessor<IFhirRequestContext> contextAccessor = Substitute.For<RequestContextAccessor<IFhirRequestContext>>();
@@ -1133,7 +1135,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
             Assert.True(testQueueClient.JobInfos.All(t => t.Status != JobStatus.Cancelled && !t.CancelRequested));
         }
 
-        private static async Task VerifyJobStatusChangedAsync(int inputFileCount, int concurrentCount, JobStatus jobStatus, int barrier, int succeedCount, int failedCount, int resumeFrom = -1, int completedCount = 0)
+        private static async Task VerifyJobStatusChangedAsync(int inputFileCount, int concurrentCount, JobStatus jobStatus, int succeedCount, int failedCount, int resumeFrom = -1, int completedCount = 0)
         {
             IImportOrchestratorJobDataStoreOperation fhirDataBulkImportOperation = Substitute.For<IImportOrchestratorJobDataStoreOperation>();
             RequestContextAccessor<IFhirRequestContext> contextAccessor = Substitute.For<RequestContextAccessor<IFhirRequestContext>>();
@@ -1160,7 +1162,7 @@ namespace Microsoft.Health.Fhir.Core.UnitTests.Features.Operations.Import
                     return jobInfo;
                 }
 
-                if (jobInfo.Id > barrier)
+                if (jobInfo.Id > succeedCount + 1)
                 {
                     return new JobInfo()
                     {
