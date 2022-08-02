@@ -90,7 +90,7 @@ namespace Microsoft.Health.Fhir.Api.Controllers
         {
             CheckIfImportIsEnabled();
 
-            ImportRequest importRequest = importTaskParameters.ExtractImportRequest();
+            ImportRequest importRequest = importTaskParameters?.ExtractImportRequest();
             ValidateImportRequestConfiguration(importRequest);
 
             if (!ImportConstants.InitialLoadMode.Equals(importRequest.Mode, StringComparison.Ordinal))
@@ -186,6 +186,12 @@ namespace Microsoft.Health.Fhir.Api.Controllers
             if (storageDetails != null && !allowedStorageType.Any(s => s.Equals(storageDetails.Type, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new RequestNotValidException(string.Format(Resources.ImportRequestValueNotValid, nameof(storageDetails)));
+            }
+
+            var inputSource = importData.InputSource;
+            if (inputSource == null)
+            {
+                throw new RequestNotValidException(string.Format(Resources.ImportRequestNotValid, nameof(inputSource)));
             }
 
             var input = importData.Input;
