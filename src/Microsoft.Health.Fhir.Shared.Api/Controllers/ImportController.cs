@@ -188,12 +188,6 @@ namespace Microsoft.Health.Fhir.Api.Controllers
                 throw new RequestNotValidException(string.Format(Resources.ImportRequestValueNotValid, nameof(storageDetails)));
             }
 
-            var inputSource = importData.InputSource;
-            if (inputSource == null)
-            {
-                throw new RequestNotValidException(string.Format(Resources.ImportRequestNotValid, nameof(inputSource)));
-            }
-
             var input = importData.Input;
             if (input == null || input.Count == 0)
             {
